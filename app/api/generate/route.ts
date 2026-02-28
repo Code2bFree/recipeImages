@@ -47,7 +47,7 @@ export async function POST(req: Request) {
       responseModalities: ["IMAGE"] as string[],
       imageConfig: {
         aspectRatio: "16:9",
-        imageSize: "1K",
+        imageSize: "2K",
       },
       systemInstruction: defaultPrompt
         ? [{ text: defaultPrompt }]
