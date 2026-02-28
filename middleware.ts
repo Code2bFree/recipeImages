@@ -21,6 +21,11 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // Allow generation endpoint (public)
+  if (pathname.startsWith("/api/generate")) {
+    return NextResponse.next();
+  }
+
   // Protect everything else
   const hasAccess = req.cookies.get(VAULT_COOKIE)?.value === "1";
   if (!hasAccess) {
