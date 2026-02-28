@@ -44,7 +44,7 @@ export async function POST(req: Request) {
     // Start modest; we can increase later or switch to object storage.
     const config = {
       thinkingConfig: { thinkingLevel: ThinkingLevel.MINIMAL },
-      responseModalities: ["IMAGE"],
+      responseModalities: ["IMAGE"] as string[],
       imageConfig: {
         aspectRatio: "16:9",
         imageSize: "1K",
@@ -52,7 +52,7 @@ export async function POST(req: Request) {
       systemInstruction: defaultPrompt
         ? [{ text: defaultPrompt }]
         : undefined,
-    } as const;
+    };
 
     const model = "gemini-3.1-flash-image-preview";
 
