@@ -31,11 +31,18 @@ export default function Home() {
   const [cooldownEndsAtMs, setCooldownEndsAtMs] = useState<number | null>(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
 
-  // hydrate from localStorage
+  // hydrate from localStorage + IndexedDB (async)
   useEffect(() => {
-    const loaded = loadHistory();
-    setItems(loaded);
-    setSelectedId(loaded[0]?.id ?? null);
+    let canceled = false;
+    (async () => {
+      const loaded = await loadHistory();
+      if (canceled) return;
+      setItems(loaded);
+      setSelectedId(loaded[0]?.id ?? null);
+    })();
+    return () => {
+      canceled = true;
+    };
   }, []);
 
   // persist
