@@ -4,15 +4,23 @@ export function GeneratorPanel({
   recipeText,
   setRecipeText,
   onGenerate,
-  busy,
+  isInCooldown,
+  cooldownRemainingMs,
+  cooldownMs,
   selected,
 }: {
   recipeText: string;
   setRecipeText: (v: string) => void;
   onGenerate: () => void;
-  busy: boolean;
+  isInCooldown: boolean;
+  cooldownRemainingMs: number;
+  cooldownMs: number;
   selected: HistoryItem | null;
 }) {
+  const secondsLeft = Math.ceil(cooldownRemainingMs / 1000);
+  const progress = cooldownMs > 0 ? 1 - cooldownRemainingMs / cooldownMs : 1;
+  const pct = Math.max(0, Math.min(1, progress)) * 100;
+
   return (
     <main className="h-full bg-zinc-50 p-4 dark:bg-black">
       <div className="mx-auto flex h-full max-w-3xl flex-col gap-4">
@@ -35,15 +43,34 @@ export function GeneratorPanel({
 
             <div className="flex items-center justify-between gap-3">
               <div className="text-xs text-zinc-500">
-                {busy ? "Generating…" : "Ready"}
+                {isInCooldown
+                  ? `Cooldown… (${secondsLeft}s)`
+                  : "Ready"}
               </div>
               <button
                 onClick={onGenerate}
-                disabled={busy || !recipeText.trim()}
-                className="rounded-xl bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-white"
+                disabled={isInCooldown || !recipeText.trim()}
+                className={
+                  "rounded-xl px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60 " +
+                  (isInCooldown
+                    ? "bg-zinc-400"
+                    : "bg-zinc-900 hover:bg-zinc-800") +
+                  " dark:text-zinc-900"
+                }
               >
-                {busy ? "Loading…" : "Generate"}
+                {isInCooldown ? `Wait ${secondsLeft}s` : "Generate"}
               </button>
+            </div>
+
+            {/* Cooldown progress bar */}
+            <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-900">
+              <div
+                className={
+                  "h-full transition-[width] duration-100 " +
+                  (isInCooldown ? "bg-zinc-400" : "bg-emerald-500")
+                }
+                style={{ width: `${isInCooldown ? pct : 100}%` }}
+              />
             </div>
           </div>
         </section>

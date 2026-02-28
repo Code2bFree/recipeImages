@@ -13,12 +13,23 @@ function newId() {
 
 export default function Home() {
   const [defaultPrompt, setDefaultPrompt] = useState(
-    "Generate a realistic, high-quality food photo. Use soft natural light. No text.",
+    [
+      "Make an ultra realistic close up and casual food picture of this, with a soft white kitchen towel with blue lines next to it.",
+      "",
+      "Rules:",
+      "- The plate should be fully in frame (ample negative space around the dish)",
+      "- Half of the image (right side) should be completely negative space",
+      "- It should be on a butcher block countertop",
+      "- NO text on the image at all, only the recipe picture",
+      "- The image should be very bright, shiny, and appetizing (studio lights)",
+      "- The plate and food should take at least 60% of the image space, filling the screen vertically",
+    ].join("\n"),
   );
   const [recipeText, setRecipeText] = useState("");
   const [items, setItems] = useState<HistoryItem[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [cooldownEndsAtMs, setCooldownEndsAtMs] = useState<number | null>(null);
+  const [nowMs, setNowMs] = useState(() => Date.now());
 
   // hydrate from localStorage
   useEffect(() => {
@@ -37,14 +48,31 @@ export default function Home() {
     [items, selectedId],
   );
 
+  // update the timer frequently enough for a smooth-ish progress bar
+  useEffect(() => {
+    const t = setInterval(() => setNowMs(Date.now()), 100);
+    return () => clearInterval(t);
+  }, []);
+
+  const cooldownMs = 5000;
+  const cooldownRemainingMs = Math.max(
+    0,
+    (cooldownEndsAtMs ?? 0) - nowMs,
+  );
+  const isInCooldown = cooldownRemainingMs > 0;
+
   async function onGenerate() {
-    if (!recipeText.trim() || busy) return;
+    if (!recipeText.trim() || isInCooldown) return;
 
     const id = newId();
     const createdAt = Date.now();
     const finalPrompt = [defaultPrompt.trim(), recipeText.trim()]
       .filter(Boolean)
       .join("\n\n");
+
+    // Start the cooldown immediately so the user can type the next recipe while
+    // the current request is still in flight.
+    setCooldownEndsAtMs(Date.now() + cooldownMs);
 
     const optimistic: HistoryItem = {
       id,
@@ -55,7 +83,6 @@ export default function Home() {
       status: "loading",
     };
 
-    setBusy(true);
     setItems((prev) => [optimistic, ...prev]);
     setSelectedId(id);
 
@@ -101,7 +128,7 @@ export default function Home() {
         ),
       );
     } finally {
-      setBusy(false);
+      // no global "busy" lock; we allow overlapping generations
     }
   }
 
@@ -124,7 +151,9 @@ export default function Home() {
           recipeText={recipeText}
           setRecipeText={setRecipeText}
           onGenerate={onGenerate}
-          busy={busy}
+          isInCooldown={isInCooldown}
+          cooldownRemainingMs={cooldownRemainingMs}
+          cooldownMs={cooldownMs}
           selected={selected}
         />
         <SettingsPanel

@@ -20,7 +20,7 @@ export function SettingsPanel({
             value={defaultPrompt}
             onChange={(e) => onChangeDefaultPrompt(e.target.value)}
             className="mt-2 w-full min-h-28 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-zinc-900/10 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-50 dark:focus:ring-zinc-50/10"
-            placeholder="e.g. Cinematic food photo, soft natural light..."
+            placeholder="(optional) Change the rules/style prompt here…"
           />
         </section>
 
