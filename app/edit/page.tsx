@@ -4,12 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { EditHistorySidebar } from "../components/EditHistorySidebar";
 import { EditSettingsPanel } from "../components/EditSettingsPanel";
 import { EditPanel } from "../components/EditPanel";
-import type { EditHistoryItem } from "../lib/editTypes";
-import {
-  clearEditHistory,
-  loadEditHistory,
-  saveEditHistory,
-} from "../lib/editStorage";
+import { useEdit } from "../context/EditContext";
 
 function newId() {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -17,7 +12,6 @@ function newId() {
 
 async function fileToBase64(file: File): Promise<string> {
   const buf = await file.arrayBuffer();
-  // Convert to base64 without data URL prefix
   const bytes = new Uint8Array(buf);
   let binary = "";
   for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
@@ -25,6 +19,8 @@ async function fileToBase64(file: File): Promise<string> {
 }
 
 export default function EditPage() {
+  const { items, setItems, selectedId, setSelectedId, onClear } = useEdit();
+
   const [systemPrompt, setSystemPrompt] = useState(
     "you pay great attention to detail and edit only what I tell you",
   );
@@ -32,12 +28,8 @@ export default function EditPage() {
   const [prompt, setPrompt] = useState("");
   const [inputFile, setInputFile] = useState<File | null>(null);
   const [inputPreviewUrl, setInputPreviewUrl] = useState<string | null>(null);
-
-  const [items, setItems] = useState<EditHistoryItem[]>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  // Cooldown (like recipe generator)
   const cooldownMs = 7000;
   const [cooldownEndsAtMs, setCooldownEndsAtMs] = useState<number | null>(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
@@ -51,27 +43,7 @@ export default function EditPage() {
   const isInCooldown = cooldownRemainingMs > 0;
 
   useEffect(() => {
-    let canceled = false;
-    (async () => {
-      const loaded = await loadEditHistory();
-      if (canceled) return;
-      setItems(loaded);
-      setSelectedId(loaded[0]?.id ?? null);
-    })();
-    return () => {
-      canceled = true;
-    };
-  }, []);
-
-  useEffect(() => {
-    saveEditHistory(items);
-  }, [items]);
-
-  useEffect(() => {
-    if (!inputFile) {
-      setInputPreviewUrl(null);
-      return;
-    }
+    if (!inputFile) { setInputPreviewUrl(null); return; }
     const url = URL.createObjectURL(inputFile);
     setInputPreviewUrl(url);
     return () => URL.revokeObjectURL(url);
@@ -84,32 +56,18 @@ export default function EditPage() {
 
   async function onEdit() {
     if (busy || isInCooldown) return;
-    if (!prompt.trim()) {
-      alert("Please enter edit instructions.");
-      return;
-    }
+    if (!prompt.trim()) { alert("Please enter edit instructions."); return; }
 
     const id = newId();
     const createdAt = Date.now();
+    const finalPrompt = [systemPrompt.trim(), prompt.trim()].filter(Boolean).join("\n\n");
 
-    const finalPrompt = [systemPrompt.trim(), prompt.trim()]
-      .filter(Boolean)
-      .join("\n\n");
-
-    const optimistic: EditHistoryItem = {
-      id,
-      createdAt,
-      prompt: prompt.trim(),
-      finalPrompt,
-      aspectRatio,
-      status: "loading",
-    };
-
-    setItems((prev) => [optimistic, ...prev]);
+    setItems((prev) => [
+      { id, createdAt, prompt: prompt.trim(), finalPrompt, aspectRatio, status: "loading" },
+      ...prev,
+    ]);
     setSelectedId(id);
     setBusy(true);
-
-    // Start cooldown immediately (same UX as generator)
     setCooldownEndsAtMs(Date.now() + cooldownMs);
 
     try {
@@ -122,20 +80,13 @@ export default function EditPage() {
           systemPrompt: systemPrompt.trim(),
           aspectRatio,
           inputImage: inputFile
-            ? {
-                mimeType: inputFile.type || "image/png",
-                dataBase64: inputImageBase64,
-              }
+            ? { mimeType: inputFile.type || "image/png", dataBase64: inputImageBase64 }
             : undefined,
         }),
       });
 
       const data = (await res.json().catch(() => null)) as
-        | {
-            ok?: boolean;
-            outputImageDataUrl?: string;
-            error?: string;
-          }
+        | { ok?: boolean; outputImageDataUrl?: string; error?: string }
         | null;
 
       if (!res.ok || !data?.outputImageDataUrl) {
@@ -144,13 +95,7 @@ export default function EditPage() {
 
       setItems((prev) =>
         prev.map((it) =>
-          it.id === id
-            ? {
-                ...it,
-                status: "done",
-                outputImageDataUrl: data.outputImageDataUrl,
-              }
-            : it,
+          it.id === id ? { ...it, status: "done", outputImageDataUrl: data.outputImageDataUrl } : it,
         ),
       );
       setPrompt("");
@@ -158,13 +103,7 @@ export default function EditPage() {
       const message = err instanceof Error ? err.message : "Edit failed";
       setItems((prev) =>
         prev.map((it) =>
-          it.id === id
-            ? {
-                ...it,
-                status: "error",
-                error: message,
-              }
-            : it,
+          it.id === id ? { ...it, status: "error", error: message } : it,
         ),
       );
     } finally {
@@ -172,15 +111,9 @@ export default function EditPage() {
     }
   }
 
-  function onClear() {
-    clearEditHistory();
-    setItems([]);
-    setSelectedId(null);
-  }
-
   return (
-    <div className="h-screen w-screen overflow-hidden bg-zinc-50 dark:bg-black">
-      <div className="grid h-full grid-cols-[320px_1fr_320px]">
+    <div className="min-h-screen w-screen overflow-auto bg-zinc-50 dark:bg-black">
+      <div className="grid grid-cols-[320px_1fr_320px]">
         <EditHistorySidebar
           items={items}
           selectedId={selectedId}
@@ -198,6 +131,7 @@ export default function EditPage() {
           isInCooldown={isInCooldown}
           cooldownRemainingMs={cooldownRemainingMs}
           cooldownMs={cooldownMs}
+          aspectRatio={aspectRatio}
           selected={selected}
         />
 

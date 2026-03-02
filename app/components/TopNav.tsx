@@ -23,11 +23,7 @@ export function TopNav() {
   }, [pathname]);
 
   return (
-    <div className="flex items-center justify-between gap-3 rounded-2xl border border-zinc-200 bg-white px-3 py-2 dark:border-zinc-800 dark:bg-zinc-950">
-      <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
-        {current.label}
-      </div>
-
+    <div className="flex items-center gap-3 border-b border-zinc-200 bg-white px-6 py-3 dark:border-zinc-800 dark:bg-zinc-950">
       <div className="relative">
         <button
           type="button"
@@ -46,7 +42,7 @@ export function TopNav() {
         {open ? (
           <div
             role="menu"
-            className="absolute right-0 mt-2 w-56 overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950"
+            className="absolute left-0 mt-2 w-56 overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950"
           >
             {PAGES.map((p) => {
               const active = p.href === pathname;
@@ -69,6 +65,10 @@ export function TopNav() {
             })}
           </div>
         ) : null}
+      </div>
+
+      <div className="text-[0.935rem] font-semibold text-zinc-900 dark:text-zinc-50">
+        {current.label}
       </div>
     </div>
   );

@@ -4,14 +4,15 @@ import { useEffect, useMemo, useState } from "react";
 import { HistorySidebar } from "./components/HistorySidebar";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { GeneratorPanel } from "./components/GeneratorPanel";
-import type { HistoryItem } from "./lib/types";
-import { clearHistory, loadHistory, saveHistory } from "./lib/storage";
+import { useRecipe } from "./context/RecipeContext";
 
 function newId() {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
 export default function Home() {
+  const { items, setItems, selectedId, setSelectedId, onClear } = useRecipe();
+
   const [defaultPrompt, setDefaultPrompt] = useState(
     [
       "Make an ultra realistic close up and casual food picture of this, with a soft white kitchen towel with blue lines next to it.",
@@ -26,47 +27,22 @@ export default function Home() {
     ].join("\n"),
   );
   const [recipeText, setRecipeText] = useState("");
-  const [items, setItems] = useState<HistoryItem[]>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [cooldownEndsAtMs, setCooldownEndsAtMs] = useState<number | null>(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
 
-  // hydrate from localStorage + IndexedDB (async)
-  useEffect(() => {
-    let canceled = false;
-    (async () => {
-      const loaded = await loadHistory();
-      if (canceled) return;
-      setItems(loaded);
-      setSelectedId(loaded[0]?.id ?? null);
-    })();
-    return () => {
-      canceled = true;
-    };
-  }, []);
-
-  // persist
-  useEffect(() => {
-    saveHistory(items);
-  }, [items]);
-
-  const selected = useMemo(
-    () => items.find((i) => i.id === selectedId) ?? null,
-    [items, selectedId],
-  );
-
-  // update the timer frequently enough for a smooth-ish progress bar
   useEffect(() => {
     const t = setInterval(() => setNowMs(Date.now()), 100);
     return () => clearInterval(t);
   }, []);
 
   const cooldownMs = 5000;
-  const cooldownRemainingMs = Math.max(
-    0,
-    (cooldownEndsAtMs ?? 0) - nowMs,
-  );
+  const cooldownRemainingMs = Math.max(0, (cooldownEndsAtMs ?? 0) - nowMs);
   const isInCooldown = cooldownRemainingMs > 0;
+
+  const selected = useMemo(
+    () => items.find((i) => i.id === selectedId) ?? null,
+    [items, selectedId],
+  );
 
   async function onGenerate() {
     if (!recipeText.trim() || isInCooldown) return;
@@ -77,20 +53,12 @@ export default function Home() {
       .filter(Boolean)
       .join("\n\n");
 
-    // Start the cooldown immediately so the user can type the next recipe while
-    // the current request is still in flight.
     setCooldownEndsAtMs(Date.now() + cooldownMs);
 
-    const optimistic: HistoryItem = {
-      id,
-      createdAt,
-      recipeText: recipeText.trim(),
-      defaultPrompt: defaultPrompt.trim(),
-      finalPrompt,
-      status: "loading",
-    };
-
-    setItems((prev) => [optimistic, ...prev]);
+    setItems((prev) => [
+      { id, createdAt, recipeText: recipeText.trim(), defaultPrompt: defaultPrompt.trim(), finalPrompt, status: "loading" },
+      ...prev,
+    ]);
     setSelectedId(id);
 
     try {
@@ -111,12 +79,7 @@ export default function Home() {
       setItems((prev) =>
         prev.map((it) =>
           it.id === id
-            ? {
-                ...it,
-                status: "done",
-                imageDataUrl: data.imageDataUrl,
-                finalPrompt: data.finalPrompt ?? it.finalPrompt,
-              }
+            ? { ...it, status: "done", imageDataUrl: data.imageDataUrl, finalPrompt: data.finalPrompt ?? it.finalPrompt }
             : it,
         ),
       );
@@ -125,29 +88,15 @@ export default function Home() {
       const message = err instanceof Error ? err.message : "Generation failed";
       setItems((prev) =>
         prev.map((it) =>
-          it.id === id
-            ? {
-                ...it,
-                status: "error",
-                error: message,
-              }
-            : it,
+          it.id === id ? { ...it, status: "error", error: message } : it,
         ),
       );
-    } finally {
-      // no global "busy" lock; we allow overlapping generations
     }
   }
 
-  function onClear() {
-    clearHistory();
-    setItems([]);
-    setSelectedId(null);
-  }
-
   return (
-    <div className="h-screen w-screen overflow-hidden bg-zinc-50 dark:bg-black">
-      <div className="grid h-full grid-cols-[320px_1fr_320px]">
+    <div className="min-h-screen w-screen overflow-auto bg-zinc-50 dark:bg-black">
+      <div className="grid grid-cols-[320px_1fr_320px]">
         <HistorySidebar
           items={items}
           selectedId={selectedId}
@@ -171,4 +120,3 @@ export default function Home() {
     </div>
   );
 }
-

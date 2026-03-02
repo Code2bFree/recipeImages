@@ -1,5 +1,7 @@
+"use client";
+
+import { useEffect } from "react";
 import type { EditHistoryItem } from "../lib/editTypes";
-import { TopNav } from "./TopNav";
 
 function guessExtensionFromDataUrl(dataUrl: string): string {
   if (dataUrl.startsWith("data:image/png")) return "png";
@@ -18,6 +20,7 @@ export function EditPanel({
   isInCooldown,
   cooldownRemainingMs,
   cooldownMs,
+  aspectRatio,
   selected,
 }: {
   prompt: string;
@@ -29,16 +32,32 @@ export function EditPanel({
   isInCooldown: boolean;
   cooldownRemainingMs: number;
   cooldownMs: number;
+  aspectRatio: string;
   selected: EditHistoryItem | null;
 }) {
   const secondsLeft = Math.ceil(cooldownRemainingMs / 1000);
   const progress = cooldownMs > 0 ? 1 - cooldownRemainingMs / cooldownMs : 1;
   const pct = Math.max(0, Math.min(1, progress)) * 100;
 
+  useEffect(() => {
+    function handlePaste(e: ClipboardEvent) {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const item of Array.from(items)) {
+        if (item.type.startsWith("image/")) {
+          const file = item.getAsFile();
+          if (file) onPickFile(file);
+          break;
+        }
+      }
+    }
+    document.addEventListener("paste", handlePaste);
+    return () => document.removeEventListener("paste", handlePaste);
+  }, [onPickFile]);
+
   return (
     <main className="h-full bg-zinc-50 p-4 dark:bg-black">
       <div className="mx-auto flex h-full max-w-3xl flex-col gap-4">
-        <TopNav />
         <section className="rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
           <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
             Image editor
@@ -47,11 +66,28 @@ export function EditPanel({
             Upload an image, describe what to change, and Nano Banana will edit
             it.
           </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {[
+              "Model: Nano Banana 2",
+              "Output: Images only",
+              "Resolution: 2K",
+              "Thinking: Minimal",
+              `Aspect: ${aspectRatio}`,
+            ].map((badge) => (
+              <span
+                key={badge}
+                className="rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-0.5 text-xs text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400"
+              >
+                {badge}
+              </span>
+            ))}
+          </div>
 
           <div className="mt-4 grid gap-3">
             <label className="block">
-              <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                Input image
+              <div className="mb-1 flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                <span>Input image</span>
+                <span className="normal-case font-normal text-zinc-400">or paste with Ctrl+V</span>
               </div>
               <input
                 type="file"

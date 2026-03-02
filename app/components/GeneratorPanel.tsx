@@ -1,5 +1,4 @@
 import type { HistoryItem } from "../lib/types";
-import { TopNav } from "./TopNav";
 
 function guessExtensionFromDataUrl(dataUrl: string): string {
   // e.g. data:image/png;base64,...
@@ -34,7 +33,6 @@ export function GeneratorPanel({
   return (
     <main className="h-full bg-zinc-50 p-4 dark:bg-black">
       <div className="mx-auto flex h-full max-w-3xl flex-col gap-4">
-        <TopNav />
         <section className="rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
           <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
             Recipe Pic Gen
@@ -43,6 +41,22 @@ export function GeneratorPanel({
             Enter recipe details and generate an image. Each run is saved to your
             local history.
           </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {[
+              "Model: Nano Banana 2",
+              "Output: Images only",
+              "Resolution: 2K",
+              "Thinking: Minimal",
+              "Aspect: 16:9",
+            ].map((badge) => (
+              <span
+                key={badge}
+                className="rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-0.5 text-xs text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400"
+              >
+                {badge}
+              </span>
+            ))}
+          </div>
 
           <div className="mt-4 grid gap-3">
             <textarea
