@@ -4,6 +4,7 @@ export type EditHistoryItem = {
   id: string;
   createdAt: number;
   prompt: string;
+  finalPrompt: string;
   aspectRatio: string;
   status: EditHistoryStatus;
 

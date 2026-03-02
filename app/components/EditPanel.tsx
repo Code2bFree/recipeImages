@@ -15,6 +15,9 @@ export function EditPanel({
   onPickFile,
   onEdit,
   isBusy,
+  isInCooldown,
+  cooldownRemainingMs,
+  cooldownMs,
   selected,
 }: {
   prompt: string;
@@ -23,8 +26,15 @@ export function EditPanel({
   onPickFile: (file: File | null) => void;
   onEdit: () => void;
   isBusy: boolean;
+  isInCooldown: boolean;
+  cooldownRemainingMs: number;
+  cooldownMs: number;
   selected: EditHistoryItem | null;
 }) {
+  const secondsLeft = Math.ceil(cooldownRemainingMs / 1000);
+  const progress = cooldownMs > 0 ? 1 - cooldownRemainingMs / cooldownMs : 1;
+  const pct = Math.max(0, Math.min(1, progress)) * 100;
+
   return (
     <main className="h-full bg-zinc-50 p-4 dark:bg-black">
       <div className="mx-auto flex h-full max-w-3xl flex-col gap-4">
@@ -71,11 +81,15 @@ export function EditPanel({
 
             <div className="flex items-center justify-between gap-3">
               <div className="text-xs text-zinc-500">
-                {isBusy ? "Working…" : "Ready"}
+                {isInCooldown
+                  ? `Cooldown… (${secondsLeft}s)`
+                  : isBusy
+                    ? "Working…"
+                    : "Ready"}
               </div>
               <button
                 onClick={onEdit}
-                disabled={isBusy}
+                disabled={isBusy || isInCooldown}
                 className={
                   "rounded-xl px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60 " +
                   (isBusy
@@ -84,8 +98,23 @@ export function EditPanel({
                   " dark:text-zinc-900"
                 }
               >
-                {isBusy ? "Editing…" : "Edit image"}
+                {isInCooldown
+                  ? `Wait ${secondsLeft}s`
+                  : isBusy
+                    ? "Editing…"
+                    : "Edit image"}
               </button>
+            </div>
+
+            {/* Cooldown progress bar */}
+            <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-900">
+              <div
+                className={
+                  "h-full transition-[width] duration-100 " +
+                  (isInCooldown ? "bg-zinc-400" : "bg-indigo-500")
+                }
+                style={{ width: `${isInCooldown ? pct : 100}%` }}
+              />
             </div>
           </div>
         </section>
@@ -119,12 +148,21 @@ export function EditPanel({
                   {selected.error || "Edit failed"}
                 </div>
               ) : selected.outputImageDataUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={selected.outputImageDataUrl}
-                  alt="Edited"
-                  className="w-full rounded-xl border border-zinc-200 dark:border-zinc-800"
-                />
+                <div className="space-y-3">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={selected.outputImageDataUrl}
+                    alt="Edited"
+                    className="w-full rounded-xl border border-zinc-200 dark:border-zinc-800"
+                  />
+
+                  <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-xs text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200">
+                    <div className="mb-1 font-semibold">Prompt used</div>
+                    <pre className="whitespace-pre-wrap break-words font-mono leading-relaxed">
+                      {selected.finalPrompt}
+                    </pre>
+                  </div>
+                </div>
               ) : null
             ) : (
               <div className="rounded-xl border border-dashed border-zinc-200 p-6 text-sm text-zinc-500 dark:border-zinc-800">

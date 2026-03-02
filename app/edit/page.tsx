@@ -37,6 +37,19 @@ export default function EditPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  // Cooldown (like recipe generator)
+  const cooldownMs = 7000;
+  const [cooldownEndsAtMs, setCooldownEndsAtMs] = useState<number | null>(null);
+  const [nowMs, setNowMs] = useState(() => Date.now());
+
+  useEffect(() => {
+    const t = setInterval(() => setNowMs(Date.now()), 100);
+    return () => clearInterval(t);
+  }, []);
+
+  const cooldownRemainingMs = Math.max(0, (cooldownEndsAtMs ?? 0) - nowMs);
+  const isInCooldown = cooldownRemainingMs > 0;
+
   useEffect(() => {
     let canceled = false;
     (async () => {
@@ -70,7 +83,7 @@ export default function EditPage() {
   );
 
   async function onEdit() {
-    if (busy) return;
+    if (busy || isInCooldown) return;
     if (!prompt.trim()) {
       alert("Please enter edit instructions.");
       return;
@@ -79,10 +92,15 @@ export default function EditPage() {
     const id = newId();
     const createdAt = Date.now();
 
+    const finalPrompt = [systemPrompt.trim(), prompt.trim()]
+      .filter(Boolean)
+      .join("\n\n");
+
     const optimistic: EditHistoryItem = {
       id,
       createdAt,
       prompt: prompt.trim(),
+      finalPrompt,
       aspectRatio,
       status: "loading",
     };
@@ -90,6 +108,9 @@ export default function EditPage() {
     setItems((prev) => [optimistic, ...prev]);
     setSelectedId(id);
     setBusy(true);
+
+    // Start cooldown immediately (same UX as generator)
+    setCooldownEndsAtMs(Date.now() + cooldownMs);
 
     try {
       const inputImageBase64 = inputFile ? await fileToBase64(inputFile) : null;
@@ -174,6 +195,9 @@ export default function EditPage() {
           onPickFile={setInputFile}
           onEdit={onEdit}
           isBusy={busy}
+          isInCooldown={isInCooldown}
+          cooldownRemainingMs={cooldownRemainingMs}
+          cooldownMs={cooldownMs}
           selected={selected}
         />
 
