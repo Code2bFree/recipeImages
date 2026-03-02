@@ -1,4 +1,5 @@
 import type { HistoryItem } from "../lib/types";
+import { TopNav } from "./TopNav";
 
 function guessExtensionFromDataUrl(dataUrl: string): string {
   // e.g. data:image/png;base64,...
@@ -33,6 +34,7 @@ export function GeneratorPanel({
   return (
     <main className="h-full bg-zinc-50 p-4 dark:bg-black">
       <div className="mx-auto flex h-full max-w-3xl flex-col gap-4">
+        <TopNav />
         <section className="rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
           <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
             Recipe Pic Gen

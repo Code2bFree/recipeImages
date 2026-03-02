@@ -26,6 +26,11 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // Allow edit endpoint (public)
+  if (pathname.startsWith("/api/edit")) {
+    return NextResponse.next();
+  }
+
   // Protect everything else
   const hasAccess = req.cookies.get(VAULT_COOKIE)?.value === "1";
   if (!hasAccess) {
