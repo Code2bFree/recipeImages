@@ -25,6 +25,7 @@ export default function EditPage() {
     "you pay great attention to detail and edit only what I tell you",
   );
   const [aspectRatio, setAspectRatio] = useState("1:1");
+  const [resolution, setResolution] = useState("1K");
   const [prompt, setPrompt] = useState("");
   const [inputFile, setInputFile] = useState<File | null>(null);
   const [inputPreviewUrl, setInputPreviewUrl] = useState<string | null>(null);
@@ -79,6 +80,7 @@ export default function EditPage() {
           prompt: prompt.trim(),
           systemPrompt: systemPrompt.trim(),
           aspectRatio,
+          resolution,
           inputImage: inputFile
             ? { mimeType: inputFile.type || "image/png", dataBase64: inputImageBase64 }
             : undefined,
@@ -140,6 +142,8 @@ export default function EditPage() {
           onChangeSystemPrompt={setSystemPrompt}
           aspectRatio={aspectRatio}
           onChangeAspectRatio={setAspectRatio}
+          resolution={resolution}
+          onChangeResolution={setResolution}
         />
       </div>
     </div>

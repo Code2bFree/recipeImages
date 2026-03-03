@@ -8,6 +8,7 @@ type EditBody =
       prompt?: string;
       systemPrompt?: string;
       aspectRatio?: string;
+      resolution?: string;
       inputImage?: { mimeType?: string; dataBase64?: string };
     }
   | null;
@@ -24,6 +25,7 @@ export async function POST(req: Request) {
   const prompt = (body?.prompt ?? "").trim();
   const systemPrompt = (body?.systemPrompt ?? "").trim();
   const aspectRatio = (body?.aspectRatio ?? "1:1").trim();
+  const resolution = (body?.resolution ?? "1K").trim();
   const inputImageBase64 = (body?.inputImage?.dataBase64 ?? "").trim();
   const inputImageMimeType = (body?.inputImage?.mimeType ?? "image/png").trim();
 
@@ -57,7 +59,7 @@ export async function POST(req: Request) {
       responseModalities: ["IMAGE"] as string[],
       imageConfig: {
         aspectRatio,
-        imageSize: "2K",
+        imageSize: resolution,
       },
       systemInstruction: systemPrompt ? [{ text: systemPrompt }] : undefined,
     };
