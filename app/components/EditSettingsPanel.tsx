@@ -65,7 +65,7 @@ export function EditSettingsPanel({
                 <option value="512">512</option>
                 <option value="1K">1K</option>
                 <option value="2K">2K</option>
-                <option value="4K">4K</option>
+                <option value="4K">4K (only upscaling)</option>
               </select>
             </label>
 

@@ -4,6 +4,10 @@ export type AspectRatio = (typeof ASPECT_RATIOS)[number];
 export const RESOLUTIONS = ["512", "2K", "4K"] as const;
 export type Resolution = (typeof RESOLUTIONS)[number];
 
+const RESOLUTION_LABELS: Record<string, string> = {
+  "4K": "4K (only upscaling)",
+};
+
 export function SettingsPanel({
   defaultPrompt,
   onChangeDefaultPrompt,
@@ -57,6 +61,7 @@ export function SettingsPanel({
               label="Resolution"
               value={resolution}
               options={RESOLUTIONS as unknown as string[]}
+              optionLabels={RESOLUTION_LABELS}
               onChange={(v) => onChangeResolution(v as Resolution)}
             />
             <ReadonlyRow label="Thinking level" value="Minimal" />
@@ -80,11 +85,13 @@ function SelectRow({
   label,
   value,
   options,
+  optionLabels = {},
   onChange,
 }: {
   label: string;
   value: string;
   options: string[];
+  optionLabels?: Record<string, string>;
   onChange: (v: string) => void;
 }) {
   return (
@@ -96,7 +103,7 @@ function SelectRow({
         className="rounded-lg border border-zinc-200 bg-white px-2 py-0.5 text-sm font-medium text-zinc-900 outline-none focus:ring-2 focus:ring-zinc-900/10 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50 dark:focus:ring-zinc-50/10"
       >
         {options.map((o) => (
-          <option key={o} value={o}>{o}</option>
+          <option key={o} value={o}>{optionLabels[o] ?? o}</option>
         ))}
       </select>
     </div>

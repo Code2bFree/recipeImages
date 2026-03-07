@@ -25,12 +25,10 @@ export default function EditPage() {
     "you pay great attention to detail and edit only what I tell you",
   );
   const [aspectRatio, setAspectRatio] = useState("3:2");
-  const [resolution, setResolution] = useState("1K");
+  const [resolution, setResolution] = useState("512");
   const [prompt, setPrompt] = useState("");
   const [inputFile, setInputFile] = useState<File | null>(null);
   const [inputPreviewUrl, setInputPreviewUrl] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-
   const cooldownMs = 7000;
   const [cooldownEndsAtMs, setCooldownEndsAtMs] = useState<number | null>(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
@@ -56,7 +54,7 @@ export default function EditPage() {
   );
 
   async function onEdit() {
-    if (busy || isInCooldown) return;
+    if (isInCooldown) return;
     if (!prompt.trim()) { alert("Please enter edit instructions."); return; }
 
     const id = newId();
@@ -68,49 +66,42 @@ export default function EditPage() {
       ...prev,
     ]);
     setSelectedId(id);
-    setBusy(true);
     setCooldownEndsAtMs(Date.now() + cooldownMs);
 
-    try {
-      const inputImageBase64 = inputFile ? await fileToBase64(inputFile) : null;
-      const res = await fetch("/api/edit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          prompt: prompt.trim(),
-          systemPrompt: systemPrompt.trim(),
-          aspectRatio,
-          resolution,
-          inputImage: inputFile
-            ? { mimeType: inputFile.type || "image/png", dataBase64: inputImageBase64 }
-            : undefined,
-        }),
+    const inputImageBase64 = inputFile ? await fileToBase64(inputFile) : null;
+
+    fetch("/api/edit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        prompt: prompt.trim(),
+        systemPrompt: systemPrompt.trim(),
+        aspectRatio,
+        resolution,
+        inputImage: inputFile
+          ? { mimeType: inputFile.type || "image/png", dataBase64: inputImageBase64 }
+          : undefined,
+      }),
+    })
+      .then((res) => res.json().catch(() => null))
+      .then((data: { ok?: boolean; outputImageDataUrl?: string; error?: string } | null) => {
+        if (!data?.outputImageDataUrl) throw new Error(data?.error || "Edit failed");
+        setItems((prev) =>
+          prev.map((it) =>
+            it.id === id ? { ...it, status: "done", outputImageDataUrl: data.outputImageDataUrl } : it,
+          ),
+        );
+      })
+      .catch((err) => {
+        const message = err instanceof Error ? err.message : "Edit failed";
+        setItems((prev) =>
+          prev.map((it) =>
+            it.id === id ? { ...it, status: "error", error: message } : it,
+          ),
+        );
       });
 
-      const data = (await res.json().catch(() => null)) as
-        | { ok?: boolean; outputImageDataUrl?: string; error?: string }
-        | null;
-
-      if (!res.ok || !data?.outputImageDataUrl) {
-        throw new Error(data?.error || "Edit failed");
-      }
-
-      setItems((prev) =>
-        prev.map((it) =>
-          it.id === id ? { ...it, status: "done", outputImageDataUrl: data.outputImageDataUrl } : it,
-        ),
-      );
-      setPrompt("");
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Edit failed";
-      setItems((prev) =>
-        prev.map((it) =>
-          it.id === id ? { ...it, status: "error", error: message } : it,
-        ),
-      );
-    } finally {
-      setBusy(false);
-    }
+    setPrompt("");
   }
 
   return (
@@ -129,7 +120,6 @@ export default function EditPage() {
           inputImagePreviewUrl={inputPreviewUrl}
           onPickFile={setInputFile}
           onEdit={onEdit}
-          isBusy={busy}
           isInCooldown={isInCooldown}
           cooldownRemainingMs={cooldownRemainingMs}
           cooldownMs={cooldownMs}

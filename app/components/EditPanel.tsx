@@ -16,7 +16,6 @@ export function EditPanel({
   inputImagePreviewUrl,
   onPickFile,
   onEdit,
-  isBusy,
   isInCooldown,
   cooldownRemainingMs,
   cooldownMs,
@@ -28,7 +27,6 @@ export function EditPanel({
   inputImagePreviewUrl: string | null;
   onPickFile: (file: File | null) => void;
   onEdit: () => void;
-  isBusy: boolean;
   isInCooldown: boolean;
   cooldownRemainingMs: number;
   cooldownMs: number;
@@ -117,28 +115,18 @@ export function EditPanel({
 
             <div className="flex items-center justify-between gap-3">
               <div className="text-xs text-zinc-500">
-                {isInCooldown
-                  ? `Cooldown… (${secondsLeft}s)`
-                  : isBusy
-                    ? "Working…"
-                    : "Ready"}
+                {isInCooldown ? `Cooldown… (${secondsLeft}s)` : "Ready"}
               </div>
               <button
                 onClick={onEdit}
-                disabled={isBusy || isInCooldown}
+                disabled={isInCooldown}
                 className={
                   "rounded-xl px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60 " +
-                  (isBusy
-                    ? "bg-zinc-400"
-                    : "bg-indigo-600 hover:bg-indigo-500") +
+                  (isInCooldown ? "bg-zinc-400" : "bg-indigo-600 hover:bg-indigo-500") +
                   " dark:text-zinc-900"
                 }
               >
-                {isInCooldown
-                  ? `Wait ${secondsLeft}s`
-                  : isBusy
-                    ? "Editing…"
-                    : "Edit image"}
+                {isInCooldown ? `Wait ${secondsLeft}s` : "Edit image"}
               </button>
             </div>
 
