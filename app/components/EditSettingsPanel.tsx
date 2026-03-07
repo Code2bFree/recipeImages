@@ -62,7 +62,7 @@ export function EditSettingsPanel({
                 onChange={(e) => onChangeResolution(e.target.value)}
                 className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-zinc-900/10 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-50 dark:focus:ring-zinc-50/10"
               >
-                <option value="512">512</option>
+                <option value="512">512 (for quick ideation)</option>
                 <option value="1K">1K</option>
                 <option value="2K">2K</option>
                 <option value="4K">4K (only upscaling)</option>

@@ -5,6 +5,7 @@ export const RESOLUTIONS = ["512", "2K", "4K"] as const;
 export type Resolution = (typeof RESOLUTIONS)[number];
 
 const RESOLUTION_LABELS: Record<string, string> = {
+  "512": "512 (for quick ideation)",
   "4K": "4K (only upscaling)",
 };
 
