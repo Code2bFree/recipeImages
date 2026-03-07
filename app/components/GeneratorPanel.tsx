@@ -17,6 +17,8 @@ export function GeneratorPanel({
   cooldownRemainingMs,
   cooldownMs,
   selected,
+  aspectRatio,
+  resolution,
 }: {
   recipeText: string;
   setRecipeText: (v: string) => void;
@@ -25,6 +27,8 @@ export function GeneratorPanel({
   cooldownRemainingMs: number;
   cooldownMs: number;
   selected: HistoryItem | null;
+  aspectRatio: string;
+  resolution: string;
 }) {
   const secondsLeft = Math.ceil(cooldownRemainingMs / 1000);
   const progress = cooldownMs > 0 ? 1 - cooldownRemainingMs / cooldownMs : 1;
@@ -45,9 +49,9 @@ export function GeneratorPanel({
             {[
               "Model: Nano Banana 2",
               "Output: Images only",
-              "Resolution: 2K",
+              `Resolution: ${resolution}`,
               "Thinking: Minimal",
-              "Aspect: 16:9",
+              `Aspect: ${aspectRatio}`,
             ].map((badge) => (
               <span
                 key={badge}

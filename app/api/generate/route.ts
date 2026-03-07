@@ -11,11 +11,13 @@ export const runtime = "nodejs";
  */
 export async function POST(req: Request) {
   const body = (await req.json().catch(() => null)) as
-    | { recipe?: string; defaultPrompt?: string }
+    | { recipe?: string; defaultPrompt?: string; aspectRatio?: string; resolution?: string }
     | null;
 
   const recipe = (body?.recipe ?? "").trim();
   const defaultPrompt = (body?.defaultPrompt ?? "").trim();
+  const aspectRatio = body?.aspectRatio ?? "16:9";
+  const imageSize = body?.resolution ?? "2K";
   const finalPrompt = [defaultPrompt, recipe].filter(Boolean).join("\n\n");
 
   if (!finalPrompt) {
@@ -46,8 +48,8 @@ export async function POST(req: Request) {
       thinkingConfig: { thinkingLevel: ThinkingLevel.MINIMAL },
       responseModalities: ["IMAGE"] as string[],
       imageConfig: {
-        aspectRatio: "16:9",
-        imageSize: "2K",
+        aspectRatio,
+        imageSize,
       },
       systemInstruction: defaultPrompt
         ? [{ text: defaultPrompt }]

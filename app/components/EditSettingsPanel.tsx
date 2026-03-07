@@ -44,11 +44,14 @@ export function EditSettingsPanel({
                 onChange={(e) => onChangeAspectRatio(e.target.value)}
                 className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-zinc-900/10 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-50 dark:focus:ring-zinc-50/10"
               >
-                <option value="1:1">1:1 (square)</option>
-                <option value="4:5">4:5 (portrait)</option>
-                <option value="2:3">2:3 (6x9 ebook)</option>
+                <option value="3:2">3:2 (landscape)</option>
                 <option value="16:9">16:9 (wide)</option>
-                <option value="9:16">9:16 (vertical TikTok)</option>
+                <option value="2:3">2:3 (portrait)</option>
+                <option value="1:1">1:1 (square)</option>
+                <option value="9:16">9:16 (vertical)</option>
+                <option value="4:3">4:3</option>
+                <option value="3:4">3:4</option>
+                <option value="4:5">4:5</option>
               </select>
             </label>
 
@@ -59,8 +62,10 @@ export function EditSettingsPanel({
                 onChange={(e) => onChangeResolution(e.target.value)}
                 className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-zinc-900/10 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-50 dark:focus:ring-zinc-50/10"
               >
+                <option value="512">512</option>
                 <option value="1K">1K</option>
                 <option value="2K">2K</option>
+                <option value="4K">4K</option>
               </select>
             </label>
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { HistorySidebar } from "./components/HistorySidebar";
-import { SettingsPanel } from "./components/SettingsPanel";
+import { SettingsPanel, type AspectRatio, type Resolution } from "./components/SettingsPanel";
 import { GeneratorPanel } from "./components/GeneratorPanel";
 import { useRecipe } from "./context/RecipeContext";
 
@@ -27,6 +27,8 @@ export default function Home() {
     ].join("\n"),
   );
   const [recipeText, setRecipeText] = useState("");
+  const [aspectRatio, setAspectRatio] = useState<AspectRatio>("3:2");
+  const [resolution, setResolution] = useState<Resolution>("2K");
   const [cooldownEndsAtMs, setCooldownEndsAtMs] = useState<number | null>(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
 
@@ -65,7 +67,7 @@ export default function Home() {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ recipe: recipeText, defaultPrompt }),
+        body: JSON.stringify({ recipe: recipeText, defaultPrompt, aspectRatio, resolution }),
       });
 
       const data = (await res.json().catch(() => null)) as
@@ -111,10 +113,16 @@ export default function Home() {
           cooldownRemainingMs={cooldownRemainingMs}
           cooldownMs={cooldownMs}
           selected={selected}
+          aspectRatio={aspectRatio}
+          resolution={resolution}
         />
         <SettingsPanel
           defaultPrompt={defaultPrompt}
           onChangeDefaultPrompt={setDefaultPrompt}
+          aspectRatio={aspectRatio}
+          onChangeAspectRatio={setAspectRatio}
+          resolution={resolution}
+          onChangeResolution={setResolution}
         />
       </div>
     </div>

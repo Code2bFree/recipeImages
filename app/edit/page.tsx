@@ -24,7 +24,7 @@ export default function EditPage() {
   const [systemPrompt, setSystemPrompt] = useState(
     "you pay great attention to detail and edit only what I tell you",
   );
-  const [aspectRatio, setAspectRatio] = useState("1:1");
+  const [aspectRatio, setAspectRatio] = useState("3:2");
   const [resolution, setResolution] = useState("1K");
   const [prompt, setPrompt] = useState("");
   const [inputFile, setInputFile] = useState<File | null>(null);
