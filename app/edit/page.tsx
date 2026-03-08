@@ -70,36 +70,48 @@ export default function EditPage() {
 
     const inputImageBase64 = inputFile ? await fileToBase64(inputFile) : null;
 
-    fetch("/api/edit", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        prompt: prompt.trim(),
-        systemPrompt: systemPrompt.trim(),
-        aspectRatio,
-        resolution,
-        inputImage: inputFile
-          ? { mimeType: inputFile.type || "image/png", dataBase64: inputImageBase64 }
-          : undefined,
-      }),
-    })
-      .then((res) => res.json().catch(() => null))
-      .then((data: { ok?: boolean; outputImageDataUrl?: string; error?: string } | null) => {
-        if (!data?.outputImageDataUrl) throw new Error(data?.error || "Edit failed");
-        setItems((prev) =>
-          prev.map((it) =>
-            it.id === id ? { ...it, status: "done", outputImageDataUrl: data.outputImageDataUrl } : it,
-          ),
-        );
-      })
-      .catch((err) => {
-        const message = err instanceof Error ? err.message : "Edit failed";
-        setItems((prev) =>
-          prev.map((it) =>
-            it.id === id ? { ...it, status: "error", error: message } : it,
-          ),
-        );
+    try {
+      const res = await fetch("/api/edit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: prompt.trim(),
+          systemPrompt: systemPrompt.trim(),
+          aspectRatio,
+          resolution,
+          inputImage: inputFile
+            ? { mimeType: inputFile.type || "image/png", dataBase64: inputImageBase64 }
+            : undefined,
+        }),
       });
+
+      const data = (await res.json().catch(() => null)) as
+        | { ok?: boolean; outputImageDataUrl?: string; error?: string }
+        | null;
+
+      if (!res.ok || !data?.outputImageDataUrl) {
+        const errorDetail = data?.error || `Server responded with status ${res.status}`;
+        throw new Error(errorDetail);
+      }
+
+      setItems((prev) =>
+        prev.map((it) =>
+          it.id === id ? { ...it, status: "done", outputImageDataUrl: data.outputImageDataUrl } : it,
+        ),
+      );
+    } catch (err) {
+      let message = "Edit failed";
+      if (err instanceof TypeError && err.message === "Failed to fetch") {
+        message = "Network error — check your internet connection or try again.";
+      } else if (err instanceof Error) {
+        message = err.message;
+      }
+      setItems((prev) =>
+        prev.map((it) =>
+          it.id === id ? { ...it, status: "error", error: message } : it,
+        ),
+      );
+    }
 
     setPrompt("");
   }

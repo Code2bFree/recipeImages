@@ -168,8 +168,16 @@ export function EditPanel({
                   Loading…
                 </div>
               ) : selected.status === "error" ? (
-                <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/40 dark:text-red-200">
-                  {selected.error || "Edit failed"}
+                <div className="rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-900/40 dark:bg-red-950/40">
+                  <div className="text-sm font-semibold text-red-800 dark:text-red-200">
+                    Edit failed
+                  </div>
+                  <div className="mt-1 text-sm text-red-700 dark:text-red-300">
+                    {selected.error || "Unknown error"}
+                  </div>
+                  <div className="mt-2 text-xs text-red-500 dark:text-red-400">
+                    Try again, or adjust your prompt / settings.
+                  </div>
                 </div>
               ) : selected.outputImageDataUrl ? (
                 <div className="space-y-3">

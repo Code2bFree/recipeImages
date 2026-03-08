@@ -24,8 +24,8 @@ export async function POST(req: Request) {
 
   const prompt = (body?.prompt ?? "").trim();
   const systemPrompt = (body?.systemPrompt ?? "").trim();
-  const aspectRatio = (body?.aspectRatio ?? "1:1").trim();
-  const resolution = (body?.resolution ?? "1K").trim();
+  const aspectRatio = (body?.aspectRatio ?? "3:2").trim();
+  const resolution = (body?.resolution ?? "512").trim();
   const inputImageBase64 = (body?.inputImage?.dataBase64 ?? "").trim();
   const inputImageMimeType = (body?.inputImage?.mimeType ?? "image/png").trim();
 
@@ -104,8 +104,27 @@ export async function POST(req: Request) {
     const outputImageDataUrl = `data:${inline.mimeType};base64,${inline.data}`;
     return NextResponse.json({ ok: true, outputImageDataUrl });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Edit failed";
-    return NextResponse.json({ ok: false, error: message }, { status: 500 });
+    let message = "Edit failed";
+    let status = 500;
+
+    if (err instanceof Error) {
+      message = err.message;
+      if (message.includes("RESOURCE_EXHAUSTED") || message.includes("429")) {
+        message = "Rate limit reached — too many requests. Please wait a moment and try again.";
+        status = 429;
+      } else if (message.includes("INVALID_ARGUMENT") || message.includes("400")) {
+        message = `Invalid request: ${message}`;
+        status = 400;
+      } else if (message.includes("PERMISSION_DENIED") || message.includes("403")) {
+        message = "API key does not have permission for image generation.";
+        status = 403;
+      } else if (message.includes("SAFETY") || message.includes("blocked")) {
+        message = "Content was blocked by safety filters. Try rephrasing your prompt.";
+        status = 400;
+      }
+    }
+
+    return NextResponse.json({ ok: false, error: message }, { status });
   }
 }
 
