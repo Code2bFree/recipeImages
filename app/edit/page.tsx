@@ -10,6 +10,12 @@ function newId() {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
+function stripHtml(html: string): string {
+  const div = document.createElement("div");
+  div.innerHTML = html;
+  return div.textContent || "";
+}
+
 async function fileToBase64(file: File): Promise<string> {
   const buf = await file.arrayBuffer();
   const bytes = new Uint8Array(buf);
@@ -55,14 +61,15 @@ export default function EditPage() {
 
   async function onEdit() {
     if (isInCooldown) return;
-    if (!prompt.trim()) { alert("Please enter edit instructions."); return; }
+    const plainPrompt = stripHtml(prompt).trim();
+    if (!plainPrompt) { alert("Please enter edit instructions."); return; }
 
     const id = newId();
     const createdAt = Date.now();
-    const finalPrompt = [systemPrompt.trim(), prompt.trim()].filter(Boolean).join("\n\n");
+    const finalPrompt = [systemPrompt.trim(), plainPrompt].filter(Boolean).join("\n\n");
 
     setItems((prev) => [
-      { id, createdAt, prompt: prompt.trim(), finalPrompt, aspectRatio, status: "loading" },
+      { id, createdAt, prompt: plainPrompt, finalPrompt, aspectRatio, status: "loading" },
       ...prev,
     ]);
     setSelectedId(id);
@@ -75,7 +82,7 @@ export default function EditPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          prompt: prompt.trim(),
+          prompt: plainPrompt,
           systemPrompt: systemPrompt.trim(),
           aspectRatio,
           resolution,

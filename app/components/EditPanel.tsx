@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import type { EditHistoryItem } from "../lib/editTypes";
+import RichEditor from "./RichEditor";
 
 function guessExtensionFromDataUrl(dataUrl: string): string {
   if (dataUrl.startsWith("data:image/png")) return "png";
@@ -44,7 +45,7 @@ export function EditPanel({
       for (const item of Array.from(items)) {
         if (item.type.startsWith("image/")) {
           const file = item.getAsFile();
-          if (file) onPickFile(file);
+          if (file) { e.preventDefault(); onPickFile(file); }
           break;
         }
       }
@@ -106,11 +107,11 @@ export function EditPanel({
               </div>
             ) : null}
 
-            <textarea
+            <RichEditor
               value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              className="w-full min-h-28 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-zinc-900/10 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-50 dark:focus:ring-zinc-50/10"
+              onChange={setPrompt}
               placeholder="e.g. Remove the background clutter, make the lighting warmer, and fix the crooked horizon."
+              collapsedHeight="112px"
             />
 
             <div className="flex items-center justify-between gap-3">
